@@ -1,3 +1,7 @@
+# Automated Android Benchmarking
+This repo is an extension of the emulator container scripts that allows for automatic installation of APKs in the emulator container. Once installed, the apps can be controlled via python and adb.
+
+
 # Android Emulator Container Scripts
 
 This is a set of minimal scripts to run the emulator in a container for various
