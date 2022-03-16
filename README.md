@@ -1,5 +1,35 @@
-# Automated Android Benchmarking
-This repo is an extension of the emulator container scripts that allows for automatic installation of APKs in the emulator container. Once installed, the apps can be controlled via python and adb.
+# Automated Android Containers
+This repo is a fork of the [android-emulator-container-scripts](https://github.com/google/android-emulator-container-scripts) with additional bash scripts that make emulator container easy to control the virtual device via python and adb. The scripts primarily use [culebra](https://github.com/dtmilano/AndroidViewClient) for automated testing and benchmarking but a JSON option is also available for simpler scenarios.
+
+
+### Creating and Launching a Container
+
+To use this script follow the instructions from the container scripts to install emu-docker and create a an emulator ready docker image.
+
+    . ./configure.sh && emu-docker create canary "P.*x86_64"
+
+
+Once the image is available you can automatically start the image and connect to the emulator using the bash script ```benchmark.sh``` with the command. 
+
+```sh
+./benchmark.sh create_web_benchmark__container -p user1,passwd1 -a
+```
+
+
+The ```create_web_benchmark__container``` function uses the same parameters as the  create_web_container.sh script.
+
+```sh
+  usage: create_web_benchmark__container [-h] [-a] [-s] [-i] -p user1,pass1,user2,pass2,...
+
+   optional arguments:
+   -h        show this help message and exit.
+   -a        expose adb. Requires ~/.android/adbkey.pub to be available at run.
+   -s        start the container after creation.
+   -p        list of username password pairs.  Defaults to: [jansene,hello]
+   -i        install systemd service, with definition in /opt/emulator
+```
+
+Once the script installs it will copy and run the ```culebra_install__script.sh``` script inside of the container. Once complete the container will be ready for control via python.
 
 
 # Android Emulator Container Scripts
