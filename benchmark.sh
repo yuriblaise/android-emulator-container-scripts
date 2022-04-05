@@ -1,5 +1,9 @@
 default_image="us-docker.pkg.dev/android-emulator-268719/images/30-google-x64:30.1.2"
 
+DOCKER_PYTHON_PATH=/root/.pyenv/versions/3.7.3/bin/python3.7
+
+DOCKER_PIP_PATH=/root/.pyenv/versions/3.7.3/bin/pip
+
 # convienence function to spin up emulator
 run () {
     local img="${1:-$default_image}"
@@ -13,6 +17,43 @@ run () {
 }
 
 
+benchmark_help() {
+    cat <<EOF
+        usage: benchmark.sh run_benchmarks [DOCKER_ID] [SRC_PATH] [DEST_PATH]
+
+        [DOCKER_ID] - id of the docker container
+
+        [SRC_PATH] - where to copy content from locally, defaults to ./benchmarks
+
+        [DEST_PATH] - where to copy SRC_PATH contents to in the container, defaults to root "/"
+EOF
+    exit 1
+}
+
+run_benchmarks () {
+
+   while getopts 'h' flag; do
+        case "${flag}" in
+        h) benchmark_help ;;
+        *) benchmark_help ;;
+        esac
+    done
+    
+    default_id=$(get_docker_id);
+    cont_id="${1:-$default_id}";
+    
+    # Copy the local folder of python scripts to the docker container
+    src_folder=${2:-./benchmarks}
+    dest=${3:-/} #destination absolute path
+    output_path=${3:-/benchmarks/results}
+    docker cp $src_folder $cont_id:$dest
+
+    docker exec $cont_id $DOCKER_PIP_PATH install -r ${dest}$(basename $src_folder)/requirements.txt
+    
+    docker exec $cont_id $DOCKER_PYTHON_PATH ${dest}$(basename $src_folder)/container_benchmark_script.py --adb_path /android/sdk/platform-tools/adb --adb_device 2 --apk_folder ${dest}$(basename $src_folder)/apks -culebra ${dest}$(basename $src_folder)/culebra.json -p 60 --silent_fail --python_path $DOCKER_PYTHON_PATH
+    docker cp $cont_id:$output_path $src_folder
+
+}
 
 create_web_benchmark__container () {
     # Pass through any create web container arguments
@@ -38,7 +79,6 @@ create_web_benchmark__container () {
     while kill -0 $BACK_PID ; do
         echo "Process is still active..."
         sleep 1
-        # You can add a timeout here if you want
     done
     echo "OUTPUT>>>>>>>>>>${x}"
     echo "Running Docker Comopose"
@@ -52,12 +92,15 @@ create_web_benchmark__container () {
     done
     docker_id=$(get_docker_id)
     
+    # Wait for logcat health status
     echo "DOCKER ID: ${docker_id}"
     echo "waiting on container health..."
     echo ```wait_docker_health ${docker_id}``` 
     echo "Connect with docker exec -it $docker_id /bin/bash"
 
-    $(culebraContainerInstall ${docker_id})
+    # Install culebra and run the benchmark scripts
+    culebraContainerInstall ${docker_id}
+    run_benchmarks ${docker_id}
 
 }
 
@@ -93,10 +136,8 @@ culebraContainerInstall() {
     cont_id="${1:-$default_id}";
     docker cp ./culebra_container_install.sh $cont_id:/culebra_container_install.sh
 
-    #Launch script and print out logs
+    #Launch culebra install script inside of container
     docker exec $cont_id sh /culebra_container_install.sh
-    echo $(docker logs -f $cont_id | grep -ve 'logcat' -ve 'kernel' -ve 'pulse' -ve 'install 3.7.3' -ve '7.3')
-    
 }
 
 

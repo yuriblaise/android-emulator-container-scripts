@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 {{from_base_img}}
-
+ENV PATH="/root/.pyenv/versions/3.7.3/bin:$PATH" 
+ENV PATH="/android/sdk/platform-tools:$PATH"
+ENV PYTHONPATH="/root/.pyenv/versions/3.7.3/bin"
+ENV ANDROID_HOME=/android/sdk
 # Install all the required emulator dependencies.
 # You can get these by running ./android/scripts/unix/run_tests.sh --verbose --verbose --debs | grep apt | sort -u
 # pulse audio is needed due to some webrtc dependencies.
@@ -52,7 +55,7 @@ EXPOSE 5555
 
 # This is the gRPC port, also useful, we don't want ADB to incorrectly identify this.
 EXPOSE 8554
-
+ENV PYTHONUNBUFFERED=1
 WORKDIR /android/sdk
 
 # You will need to make use of the grpc snapshot/webrtc functionality to actually interact with
