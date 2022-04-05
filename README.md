@@ -1,10 +1,10 @@
 # Automated Android Containers
-This repo is a fork of the [android-emulator-container-scripts](https://github.com/google/android-emulator-container-scripts) with additional bash scripts that make emulator container easy to control the virtual device via python and adb. The scripts primarily use [culebra](https://github.com/dtmilano/AndroidViewClient) for automated testing and benchmarking but a JSON option is also available for simpler scenarios.
+This repo is a fork of the [android-emulator-container-scripts](https://github.com/google/android-emulator-container-scripts) with additional bash scripts that make emulator container easy to control via python and adb. The scripts are primarily built for use with [culebra](https://github.com/dtmilano/AndroidViewClient), a tool for generating ready-to-execute python scripts for Black box testing, but a JSON file describing input commands is also available for simpler scenarios.
 
 
-### Creating and Launching a Container
+## Creating and Launching a Container
 
-To use this script follow the instructions from the container scripts to install emu-docker and create a an emulator ready docker image.
+To use this script follow the instructions from the container scripts to install emu-docker and create an emulator ready docker image.
 
     . ./configure.sh && emu-docker create canary "P.*x86_64"
 
@@ -30,6 +30,100 @@ The ```create_web_benchmark__container``` function uses the same parameters as t
 ```
 
 Once the script installs it will copy and run the ```culebra_install__script.sh``` script inside of the container. Once complete the container will be ready for control via python.
+
+### Running Benchmarks in your container
+After culebra is installed the ```run_benchmarks``` function will copy the contents of the folder ``benchmarks`` to the root directory of the docker container and installs any python dependencies with 
+
+```sh
+pip -r install requirements.txt
+``` 
+
+```sh
+usage: ./benchmark.sh run_benchmarks [DOCKER_ID] [SRC_PATH] [DEST_PATH]
+
+        [DOCKER_ID] - id of the docker container
+
+        [SRC_PATH] - where to copy content from locally, defaults to ./benchmarks
+
+        [DEST_PATH] - where to copy SRC_PATH contents to in the container, defaults to root "/"
+```
+
+Included in the repo is a sample folder that contains three open source benchmarking apps and the ```container_benchmark_script.py``` file that uses JSON to launch and collect data from benchmarking apps (or any app for that matter). 
+
+The three benchmarking apps included in the repo are...
+
+1. [Android benchmark](https://github.com/yuriblaise/AndroidBenchmark) - Comprehensive benchmark suite
+2. [JankBenchX](https://github.com/yuriblaise/JankBenchX) - Benchmark UI performance on Android devices
+3. [Android GPU Stress Test](https://github.com/yuriblaise/gpu-emulation-stress-test) - OpenGL performance
+
+The apps are located in benchmarks/apks. Along with the apks is a sample `benchmark.json` config file. 
+
+### Configuring your benchmarks
+To configure a custom benchmark you only need a json file with the [app package name](https://developer.android.com/studio/build/configure-app-module) and a script to run the benchmarks (or the coords of the touch inputs). Each benchmark configuration should be stored as an entry in the JSON list contained in the ```benchmark.json``` file. You can pass your own JSON file with the flag ```--config```.
+
+
+
+```Benchmark.json
+benchmark_dict = {
+    'package_name': "Package Name",
+    'Coords': [(x,y,delay)], #list of touch input coords as (x,y) tuple, delay time (s) is optional and defaults to 3s
+    'timeout':  10, # timeout time in minutes (optional),
+    'poll_rate': 3 # how often to check the disk for new files in seconds (optional),
+    'num_output_files': 2 # number of output files to find before moving on to the next benchmark (optional)
+
+}
+```
+### Benchmarking with Bash or Python
+
+For more advanced control with python or even bash use the ```-culebra``` flag to enable these additional options
+
+```Culebra.json
+culebra_dict = {
+    'package_name': "Package",
+    'adbLaunch': True, # whether to launch the package via adb before executing the script
+    'script': 'auto_bench.py', # the path to the culebra script, if shell is true the shell command to run
+    'shell': True, # if shell is true, the script will launch from a shell subprocess instead of python (optional)
+    'timeout':  10, # timeout time in minutes (optional),
+    'poll_rate': 3 # how often to check the disk for new files in seconds (optional),
+    'num_output_files': 2 # number of output files to find before moving on to the next benchmark (optional)
+}
+```
+
+### Manually Launching your benchmarks
+As long as the necessary dependencies are installed the  `container_benchmark_script.py` can be launched from any system that is connected to an android device over adb, to install the script requirements locally use
+
+```sh
+pip install -r requirements.txt
+```
+
+to ensure you're connected to the right device use the `--serial` flag to specify which device to connect to. If you want to avoid the adb prompt when more than one device is connected use the `--adb_device` flag.
+
+For a more detailed description of the scripts settings and options use the `--help` flag. 
+
+
+### Collecting Results
+By default the ```container_benchmark_script``` script will check the sdcard folder of the device for any csv files and copy them over to the adb host's filesystem. To change the folder the script checks use the `--output_path` flag. 
+
+### Handling Failures
+You can handle failures via your own script and with some of the `container_benchmark_script.py` flags. To have the script move on the next benchmark after one fails use the `--silent_fail` flag.
+
+By default the script will retry the benchmark twice before failing and will timeout after 15 minutes. To configure these settings use the `--retries` and `--timeout` flag respectively.
+
+on failure the script will attempt to take a screenshot. If successful it will be saved as `screenshot_{timestamp}.png` in the results path with the other benchmark results. 
+
+## Generating Python scripts w/ Culebra GUI
+You can automatically generate your own python scripts for controlling the emulator without writing any code using Culebra's user friendly GUI.
+
+If culebra is installed on a system with a desktop environment the only command you'll need is. 
+
+```sh
+culebra -G
+```
+
+For a more in depth guide visit their [wiki](https://github.com/dtmilano/AndroidViewClient/wiki/Culebra-GUI).
+
+![Screenshot ](https://github.com/dtmilano/AndroidViewClient/wiki/images/culebra-drag_dialog.png)
+
 
 
 # Android Emulator Container Scripts
