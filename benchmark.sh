@@ -43,7 +43,7 @@ run_benchmarks () {
     cont_id="${1:-$default_id}";
     
     # Copy the local folder of python scripts to the docker container
-    src_folder=${2:-./benchmarks}
+    src_folder=${2:-$PWD/benchmarks}
     dest=${3:-/} #destination absolute path
     output_path=${3:-/benchmarks/results}
     docker cp $src_folder $cont_id:$dest

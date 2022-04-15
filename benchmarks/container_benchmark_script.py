@@ -323,9 +323,9 @@ def loadBenchmarks(benchmark_json,retries,screenshot):
                 b_poll_rate = b['poll_rate'] if 'poll_rate' in b.keys() else poll_rate
                 b_poll_rate = int(b_poll_rate)
                 b_num_files = b['num_output_files'] if 'num_output_files' in b.keys() else num_output_files
-                
+                b_filetype = b['filetype'] if 'filetype' in b.keys() else '.csv'
                 # will check device storage for output
-                r = fileWait(t, filetype=".csv", filter=index, timeout_min=b_timeout,
+                r = fileWait(t, filetype=b_filetype, filter=index, timeout_min=b_timeout,
                     poll_rate=b_poll_rate, num_files=b_num_files,serial=serial)
                 
                 if not r:
@@ -377,6 +377,7 @@ def loadCulebra(culebra_config,retries,screenshot):
                 b_poll_rate = b['poll_rate'] if 'poll_rate' in b.keys() else poll_rate
                 b_poll_rate = int(b_poll_rate)
                 b_num_files = b['num_output_files'] if 'num_output_files' in b.keys() else num_output_files
+                b_filetype = b['filetype'] if 'filetype' in b.keys() else '.csv'
                 b_shell = b['shell'] if 'shell' in b.keys() else False
                 t = datetime.now()
                 if b['adbLaunch']:
@@ -390,7 +391,7 @@ def loadCulebra(culebra_config,retries,screenshot):
                     handleCommand(f'{b["script"]}', f'The following command failed: "{b["script"]}"')
                     
                 # will check device storage for output
-                r = fileWait(t, filetype=".csv", filter=index, timeout_min=b_timeout,
+                r = fileWait(t, filetype=b_filetype, filter=index, timeout_min=b_timeout,
                     poll_rate=b_poll_rate, num_files=b_num_files, serial=serial)
 
                 if not r:

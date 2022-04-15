@@ -64,13 +64,13 @@ To configure a custom benchmark you only need a json file with the [app package 
 
 
 ```Benchmark.json
-benchmark_dict = {
+{
     'package_name': "Package Name",
     'Coords': [(x,y,delay)], #list of touch input coords as (x,y) tuple, delay time (s) is optional and defaults to 3s
     'timeout':  10, # timeout time in minutes (optional),
     'poll_rate': 3 # how often to check the disk for new files in seconds (optional),
     'num_output_files': 2 # number of output files to find before moving on to the next benchmark (optional)
-
+    filetype: '.csv' # filetype to search for, accepts regex as well. (optional)
 }
 ```
 ### Benchmarking with Bash or Python
@@ -78,7 +78,7 @@ benchmark_dict = {
 For more advanced control with python or even bash use the ```-culebra``` flag to enable these additional options
 
 ```Culebra.json
-culebra_dict = {
+{
     'package_name': "Package",
     'adbLaunch': True, # whether to launch the package via adb before executing the script
     'script': 'auto_bench.py', # the path to the culebra script, if shell is true the shell command to run
@@ -86,6 +86,7 @@ culebra_dict = {
     'timeout':  10, # timeout time in minutes (optional),
     'poll_rate': 3 # how often to check the disk for new files in seconds (optional),
     'num_output_files': 2 # number of output files to find before moving on to the next benchmark (optional)
+    filetype: '.csv' # filetype to search for, accepts regex as well. (optional)
 }
 ```
 

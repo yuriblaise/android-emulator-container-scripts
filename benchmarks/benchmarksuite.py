@@ -58,7 +58,7 @@ class CulebraTests(CulebraTestCase):
 
         _s = CulebraTests.sleep
         _v = CulebraTests.verbose
-        retries = 3
+        retries = 10
 
         # Attempts to start full benchmark suite 3 times
         for _ in range(retries):
