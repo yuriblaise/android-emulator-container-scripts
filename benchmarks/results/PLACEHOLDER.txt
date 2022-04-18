@@ -1,0 +1,3 @@
+Placeholder file for the results folder so that it is recognized by git.
+
+The folder that the results will transfer to should exist prior to launching the scripts.

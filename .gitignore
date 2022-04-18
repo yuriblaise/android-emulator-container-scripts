@@ -12,8 +12,8 @@ build/
 develop-eggs/
 dist/
 downloads/
-benchmarks/results/
-eggs/
+*.benchmarks/results     # ignore all paths ending in '.user'
+!*.benchmarks/results/   # but don't ignore these paths if they are directories.eggs/
 .eggs/
 lib/
 lib64/
