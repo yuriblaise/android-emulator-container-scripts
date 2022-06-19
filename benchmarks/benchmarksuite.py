@@ -76,7 +76,6 @@ class CulebraTests(CulebraTestCase):
                 except:
                     print(f"Test failed, will make {retries - _} more attempt(s)")
                     self.vc.sleep(_s)
-                    break
             else:
                 self.vc.dump(window=-1)
                 self.vc.findViewWithTextOrRaise(u'START BENCHMARK!').touch()

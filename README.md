@@ -81,7 +81,7 @@ For more advanced control with python or even bash use the ```-culebra``` flag t
 {
     'package_name': "Package",
     'adbLaunch': True, # whether to launch the package via adb before executing the script
-    'script': 'auto_bench.py', # the path to the culebra script, if shell is true the shell command to run
+    'script': 'auto_bench.py', # the path to the culebra script, if shell is true the shell command to run(optional)
     'shell': True, # if shell is true, the script will launch from a shell subprocess instead of python (optional)
     'timeout':  10, # timeout time in minutes (optional),
     'poll_rate': 3 # how often to check the disk for new files in seconds (optional),

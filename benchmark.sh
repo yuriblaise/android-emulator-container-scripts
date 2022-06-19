@@ -47,6 +47,9 @@ run_benchmarks () {
     dest=${3:-/} #destination absolute path
     output_path=${3:-/benchmarks/results}
     docker cp $src_folder $cont_id:$dest
+    
+    #Make default benchmark results directory
+    docker exec $cont_id mkdir $output_path
 
     docker exec $cont_id $DOCKER_PIP_PATH install -r ${dest}$(basename $src_folder)/requirements.txt
     

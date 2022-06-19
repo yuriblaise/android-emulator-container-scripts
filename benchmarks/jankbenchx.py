@@ -57,61 +57,16 @@ class CulebraTests(CulebraTestCase):
 
         _s = CulebraTests.sleep
         _v = CulebraTests.verbose
-        waitForDump = True
-        while waitForDump: 
+        for _ in range(retries):
+            self.vc.dump(window=-1)       
             try:
-                self.vc.dump(window=-1)
-                adbclient, serialno = self.vc.connectToDeviceOrExit()
-                waitForDump = False
-                print("serialno",serialno)
+                self.vc.findViewByIdOrRaise("com.android.benchmark:id/start_button").touch()
             except Exception as e:
-                print("Dump Failed Trying again...")
+                print(f"Test failed, will make {retries - _} more attempt(s)")
+                self.vc.sleep(_s)
+        else:
+            raise Exception(f"Script failed after {retries} attempts")
 
-        def notRespondingFix():
-            mFocus = self.device.shell("dumpsys window windows | grep -E 'mCurrentFocus'")
-            print("mFocus is", mFocus)
-            if "not responding" in mFocus.lower() or "isn't responding" in mFocus.lower():
-                print("Found ANR Prompt Closing")
-                try:
-                    self.vc.findViewWithTextOrRaise(u'Wait').touch()
-                except:
-                    print("Failed to close ANR")
-            return 
-
-
-        def waitForActivity(activityName):
-            print("Waiting on", activityName)
-            adbclient, serialno = self.vc.connectToDeviceOrExit()
-            activity = adbclient.getTopActivityName()
-            
-            
-            while activity != activityName:
-                activity = re.sub('.*/', '', activity)
-                activity = re.sub("^\.",'',activity)
-                if activity == activityName:
-                    notRespondingFix()
-                    print(">"*50)
-                    print(activityName, "Found!")
-                    return True     
-                notRespondingFix()
-                print("Found", activity)
-                if activity == '':
-                    self.device.touchDip(50.0, 50.0, 0)
-
-                    
-                print("Waiting on", activityName)       
-        
-
-
-
-
-
-        
-        waitForActivity("app.HomeActivity")
-
-        self.vc.sleep(_s)
-
-        self.vc.findViewByIdOrRaise("com.android.benchmark:id/start_button").touch()
                 
 
 if __name__ == '__main__':

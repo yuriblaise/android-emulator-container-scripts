@@ -12,7 +12,7 @@ import re
 import argparse
 from tracemalloc import start
 import pandas as pd
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 import traceback
 
 # %%
@@ -197,9 +197,9 @@ def outputCheck(start_time, output_path=output_path, filetype = '.csv',serial=se
         raw_df = pd.DataFrame(filepaths, columns=["raw_data"])
         df = raw_df["raw_data"].str.split(" /", expand=True)
         df.columns = ['created_date', 'filepath']
+        df.created_date = df.created_date.astype('datetime64[ns]')
         #get files created after the start_time
-        df.created_date = df.created_date.astype('datetime64')
-        df = df[df.created_date > start_time]
+        df = df[df.created_date.values > pd.Series(start_time).values[0]]
     
     
         # get files from filepaths
@@ -312,7 +312,7 @@ def loadBenchmarks(benchmark_json,retries,screenshot):
         for _ in range(retries):        
             try:
                 #open package
-                t = datetime.now()
+                t = datetime.now(timezone.utc).astimezone()
                 setWritePermissions(b['package_name'], serial)
                 openPackage(b['package_name'], serial)
                 waitForOpen(b['package_name'], serial)
@@ -342,8 +342,9 @@ def loadBenchmarks(benchmark_json,retries,screenshot):
             if silent: print(f"Silent_fail is on, moving on to next benchmark after {retries} failed attempts.")
             if screenshot:
                 print("Saving Screenshot....")
+                dir_path = os.path.dirname(os.path.realpath(__file__))
                 try:
-                    screenshot = f"{adb} -s {serial} shell screencap -p > screenshot_{t}.png"
+                    screenshot = f"{adb} -s {serial} shell screencap -p > {dir_path}/screenshot_{t}.png"
                     subprocess.Popen(
                     screenshot, stdout=subprocess.PIPE, 
                     stderr=subprocess.PIPE, text=True, shell=True
@@ -354,7 +355,8 @@ def loadBenchmarks(benchmark_json,retries,screenshot):
     # Transfer files to results_path and exit
     if verbose: print("Pulling Files")
     for filepath in index:
-        pull_files = f"{adb} -s {serial} pull {filepath} {results_path}/{os.path.basename(filepath)}"
+        result_filename = os.path.basename(filepath)
+        pull_files = f"{adb} -s {serial} pull {filepath} {results_path}/{result_filename}"
         subprocess.Popen(
         pull_files, stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE, text=True, shell=True
@@ -379,15 +381,15 @@ def loadCulebra(culebra_config,retries,screenshot):
                 b_num_files = b['num_output_files'] if 'num_output_files' in b.keys() else num_output_files
                 b_filetype = b['filetype'] if 'filetype' in b.keys() else '.csv'
                 b_shell = b['shell'] if 'shell' in b.keys() else False
-                t = datetime.now()
+                t = datetime.now(timezone.utc).astimezone()
                 if b['adbLaunch']:
                     setWritePermissions(b['package_name'], serial)
                     openPackage(b['package_name'], serial)
                     waitForOpen(b['package_name'], serial)
                 #handling custom scripts 
-                if not b_shell:
+                if not b_shell and 'script' in b.keys():
                     handleCommand(f'{python_path} {b["script"]}', f'The culebra script {b["script"]} failed with the error: ')
-                else:
+                if 'script' in b.keys():                
                     handleCommand(f'{b["script"]}', f'The following command failed: "{b["script"]}"')
                     
                 # will check device storage for output
@@ -408,20 +410,19 @@ def loadCulebra(culebra_config,retries,screenshot):
         else:
             if silent: print(f"Silent_fail is on, moving on to the next benchmark after {retries} failed attempts.")
             if screenshot:
+                dir_path = os.path.dirname(os.path.realpath(__file__))
                 print("Saving Screenshot....")
                 try:
-                    screenshot = f"{adb} -s {serial} shell screencap -p > {results_path}/screenshot_{t}.png"
-                    subprocess.Popen(
-                    screenshot, stdout=subprocess.PIPE, 
-                    stderr=subprocess.PIPE, text=True, shell=True
-                    ).communicate()
+                    #Trying Culebra script as well
+                    handleCommand(f'{python_path} {dir_path}/screenshot.py', f'The culebra script {b["package_name"]} failed with the error: ')
                 except Exception as e:
                     print(f"Failed to save screenshot_{t}.png",e)
             if not silent: exit()
     # Transfer files to results_path and exit
     if verbose: print("Pulling Files")
     for filepath in index:
-        pull_files = f"{adb} -s {serial} pull {filepath} {results_path}/{os.path.basename(filepath)}"
+        result_filename = os.path.basename(filepath)
+        pull_files = f"{adb} -s {serial} pull {filepath} {results_path}/{result_filename}"
         subprocess.Popen(
         pull_files, stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE, text=True, shell=True
